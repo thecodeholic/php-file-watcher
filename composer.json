@@ -1,0 +1,12 @@
+{
+    "name": "tc/php-watch-files",
+    "description": "Watch file or folder and execute code when something is changes inside",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Zura Sekhniashvili",
+            "email": "zurasekhniashvili@gmail.com"
+        }
+    ],
+    "require": {}
+}
