@@ -6,7 +6,6 @@
  */
 
 $path = $argv[1];
-$previousDate = filemtime($path);
 
 $filesMap = [];
 readPath($path, $filesMap);
@@ -70,6 +69,7 @@ function checkPath($path)
  */
 function readPath($path, &$filesMap)
 {
+    $filesMap[$path] = filemtime($path);
     if (is_dir($path)) {
         $files = scandir($path);
         foreach ($files as $file) {
@@ -83,5 +83,4 @@ function readPath($path, &$filesMap)
             }
         }
     }
-    $filesMap[$path] = filemtime($path);
 }
