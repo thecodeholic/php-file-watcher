@@ -30,8 +30,8 @@ class Watcher
         }
         $this->options = new Options();
         $options = array_merge($this->defaultOptions, $options);
-        foreach ($options as $key => $value){
-            if (!property_exists($this->options, $key)){
+        foreach ($options as $key => $value) {
+            if (!property_exists($this->options, $key)) {
                 throw new InvalidOptionException($key, Options::class);
             } else {
                 $this->options->$key = $value;
@@ -105,32 +105,36 @@ class Watcher
      * is modified prints the result
      *
      * @param $path
+     * @throws InvalidEventTypeException
      * @author Zura Sekhniashvili <zurasekhniashvili@gmail.com>
      */
     function checkPath($path)
     {
+        $fileEvents = [];
         $currentStatus = $this->readPath($path);
         // Detect deleted files and modifications...
         foreach ($this->filesMap as $file => $time) {
             if (!isset($currentStatus[$file])) {
-                $this->triggerEvent(EventTypes::FILE_DELETED, $file);
+                $fileEvents[] = new Event(EventTypes::FILE_DELETED, $file);
             } else if ($currentStatus[$file] !== $time) {
-                $this->triggerEvent(EventTypes::FILE_CHANGED, $file);
+                $fileEvents[] = new Event(EventTypes::FILE_CHANGED, $file);
             }
         }
         // Detect new files
         foreach ($currentStatus as $file => $time) {
             if (!isset($this->filesMap[$file])) {
-                $this->triggerEvent(EventTypes::FILE_ADDED, $file);
+                $fileEvents[] = new Event(EventTypes::FILE_ADDED, $file);
             }
         }
         $this->filesMap = $currentStatus;
+        foreach ($fileEvents as $event) {
+            $this->triggerEvent($event);
+        }
     }
 
-    protected function triggerEvent($eventType, $file)
+    protected function triggerEvent($event)
     {
-        $event = new Event($eventType, $file);
-        if ($this->callback && $this->callback instanceof \Closure){
+        if ($this->callback && $this->callback instanceof \Closure) {
             call_user_func($this->callback, $event);
         }
     }
