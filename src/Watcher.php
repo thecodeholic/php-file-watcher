@@ -17,9 +17,6 @@ class Watcher
 {
     private $path;
     private $filesMap = [];
-    private $defaultOptions = [
-        'watchInterval' => 1
-    ];
     private $options = null;
     private $callback = null;
 
@@ -29,7 +26,6 @@ class Watcher
             throw new InvalidPathException($path);
         }
         $this->options = new Options();
-        $options = array_merge($this->defaultOptions, $options);
         foreach ($options as $key => $value) {
             if (!property_exists($this->options, $key)) {
                 throw new InvalidOptionException($key, Options::class);
@@ -110,25 +106,30 @@ class Watcher
      */
     function checkPath($path)
     {
-        $fileEvents = [];
+        $eventFiles = [];
         $currentStatus = $this->readPath($path);
         // Detect deleted files and modifications...
         foreach ($this->filesMap as $file => $time) {
             if (!isset($currentStatus[$file])) {
-                $fileEvents[] = new Event(EventTypes::FILE_DELETED, $file);
+                $eventFiles[] = new Event(EventTypes::FILE_DELETED, $file);
             } else if ($currentStatus[$file] !== $time) {
-                $fileEvents[] = new Event(EventTypes::FILE_CHANGED, $file);
+                $eventFiles[] = new Event(EventTypes::FILE_CHANGED, $file);
             }
         }
         // Detect new files
         foreach ($currentStatus as $file => $time) {
             if (!isset($this->filesMap[$file])) {
-                $fileEvents[] = new Event(EventTypes::FILE_ADDED, $file);
+                $eventFiles[] = new Event(EventTypes::FILE_ADDED, $file);
             }
         }
         $this->filesMap = $currentStatus;
-        foreach ($fileEvents as $event) {
-            $this->triggerEvent($event);
+
+        if ($this->options->cacheChanges && $eventFiles){
+            $this->triggerEvent(new BatchEvent($eventFiles));
+        } else {
+            foreach ($eventFiles as $event) {
+                $this->triggerEvent($event);
+            }
         }
     }
 
